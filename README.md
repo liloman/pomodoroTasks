@@ -10,22 +10,37 @@ It works with a client/server architecture.
 
 Implemented with FSM (Finite State Machine), some mutex (flock) and really simple.
 
-The typical workflow is start the daemon with login (systemd,openbox autostart ...) and 
-then using shortkeys or a very simple trayicon app work with it.
+The typical workflow is start the daemon once log in (systemd,openbox autostart ...) and 
+then using a very simple trayicon app work with it (not a must)
 
 Just a hack day.
 
 ###Dependencies
 
 1. flock
-2. inotify-tools (great toolset)
-3. zenity/notify/gpicview/xscreensaver/whatever you want to show a msg/image/lock...
+2. inotify-tools 
+3. yad 
+
+Great tools all!
 
 ###Why yet another pomodoro app?
 
 Emmm...for fun? :o:
 
+
+###Screenshots
+
+Relax time:
+
+![25 minutes passed](images/timer1.png "25 minutes passed")
+
+Back to work:
+
+![Back to work?](images/timer2.png "Back to work?")
+
 ###TODO
 
+- [ ] Make the gtk trayicon app (yad rulez)
+- [ ] Taskwarrior integration
 - [ ] Unit testing (bats)
-- [ ] Make the gtk trayicon app
+- [ ] Only one daemon instance

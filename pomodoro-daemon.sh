@@ -2,9 +2,9 @@
 # Pomodoro daemon with FSM
 
 needs() { hash $1 &>/dev/null || { echo "Needs $1" >&2; exit 1; } }
-needs inotifywait
 needs flock
-needs zenity
+needs inotifywait
+needs yad
 
 #Finite State Machine logic (FSM)
 declare -A events
@@ -18,7 +18,7 @@ events=(
 [started-pause]=paused 
 [started-stop]=stopped
 [started-status]=status
-[started-]=increment
+[started-timeout]=increment
 [paused-start]=started
 [paused-pause]=started
 [paused-reset]=stopped
@@ -26,45 +26,52 @@ events=(
 )
 
 
-#For unit testing pass some number>0
-#so It will work in seconds then minutes
-testing=${1:-0}
+#For unit testing pass some number>0  (normally 1)
+#so It will work in that number of seconds than 60
+testing=$1
 readonly API=/dev/shm/pomodoro
+readonly LOCK=/dev/shm/pomodoro.lock
 #timeout pomodoro (minutes)
 readonly TIMER1=25
 #break time pomodoro (minutes)
 readonly TIMER2=5
-readonly LOCK=/dev/shm/pomodoro.lock
-#timeout watch file (seconds)
-TIMEOUT=60
-\rm -f $LOCK
+#timeout wait for events (seconds)
+readonly TIMEOUT=${testing:-60}
 >$API
-((testing)) && TIMEOUT=1
 
-#Global values
-state=stopped
+#Global default values
+state=started
 date=0
 total=0
 
-
 locked() {
-    local resol=($(xrandr --current | grep '*' ))
-    local width=${resol[0]%x*}
-    local height=${resol[0]#*x}
     local left=$((TIMER2))
-    ((testing)) || ((left*=60))
-    ((width-=20))
+    [[ -n $testing ]] && ((left*=10)) || ((left*=60))
+    local general=' --model --on-top --sticky  --center --undecorated --title=PomodoroBash' 
+    local timeout='  --timeout=$left --timeout-indicator=bottom '
+    local image=' --image-on-top --image=images/pomodoro.png' 
+    local buttons='  --buttons-layout=center --button="Back to work"!face-crying:0  '
+    local forms=' --align=center --form'
+    local msg=' --field=$"<b>Go away you fool\!</b>":LBL '
     state=locked
     date=0
     total=0
-    {
-        for p in {1..100};do
-            echo $p
-            sleep $((left/100))
-        done
-    } | zenity --progress --text Break time --auto-close --time-remaining   --no-cancel --modal --width=$width --height=$height --auto-close
-    #Stop it 
-    stopped
+    eval yad $general $timeout  $image $buttons $forms $msg
+    local ret=$?
+    if (($ret==0));then
+        started
+    else #the user didn't hit the back to work button
+        image=' --image-on-top --image=images/clock.png' 
+        buttons=' --buttons-layout=center --button="Restart(default)"!gtk-yes:0  --button="Stop it"!gtk-no:1 '
+        msg=' --field=$"<b>Do you want to restart pomodoroBash?</b>":LBL '
+        eval yad $general $image $buttons $forms $msg
+        local ret=$?
+        if (($ret==0));then
+            started
+        else
+            stopped
+        fi
+    fi
 }
 
 warning() { echo "Already started"; }
@@ -88,7 +95,7 @@ started() {
 paused() {
     local now=$(date +%s)
     local time=60
-    ((testing)) && time=1
+    [[ -n $testing ]] && time=$testing
     local min=$(( (now - date) / time ))
     state=paused
     ((total+=min))
@@ -101,19 +108,23 @@ stopped() {
 }
 
 
-
+#Call initial state
+$state
 #Launch daemon
 while true; do
     #wait TIMEOUT seconds or a new msg
     inotifywait -e modify $API -t $TIMEOUT &> /dev/null
-    {
-        flock -w 5 -x 39 || { echo "Couldn't acquire the lock" >&2; continue; }
-        event=$(<$API)
-        >$API
-        next=$state-$event
-        command=${events[$next]}
+    ret=$?
+    { #mutex on FD 39 $LOCK
+        if (($ret == 0)); then
+            flock -w 5 -x 39 || { echo "Couldn't acquire the lock" >&2; continue; }
+            event=$(<$API)
+            #Timeout event
+        elif (($ret == 2)); then
+            event=timeout
+        fi
+        command=${events[$state-$event]}
         [[ -z $command ]] && continue
-        [[ -n $DEBUG ]] && echo doing:$command 
         $command
     } 39>$LOCK
 done
