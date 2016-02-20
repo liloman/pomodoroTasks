@@ -40,7 +40,7 @@ Back to work:
 
 ###TODO
 
-- [ ] Make the gtk trayicon app (yad rulez)
+- [x] Make the gtk trayicon app (yad rulez)
 - [ ] Taskwarrior integration
 - [ ] Unit testing (bats)
 - [ ] Only one daemon instance
