@@ -6,23 +6,23 @@ needs flock
 needs inotifywait
 needs yad
 
+
 #Finite State Machine logic (FSM)
 declare -A events
 # [from-event]=to
 events=(
-[stopped-start]=started
-[stopped-reset]=started
-[stopped-status]=status
 [started-start]=warning 
-[started-reset]=stopped
 [started-pause]=paused 
 [started-stop]=stopped
-[started-status]=status
 [started-timeout]=increment
+[started-status]=status
 [paused-start]=started
-[paused-pause]=started
-[paused-reset]=stopped
+[paused-stop]=stopped
+[paused-pause]=warning
 [paused-status]=status
+[stopped-start]=started
+[stopped-stop]=warning
+[stopped-status]=status
 )
 
 
@@ -37,12 +37,21 @@ readonly TIMER1=25
 readonly TIMER2=5
 #timeout wait for events (seconds)
 readonly TIMEOUT=${testing:-60}
+# pipe to work with the trayicon
+readonly FIFO=/dev/shm/pomodoro.app
 >$API
 
 #Global default values
 state=started
-date=0
+date=$(date +%s)
 total=0
+mkfifo $FIFO
+
+clean_up() {
+    \rm -f $FIFO
+}
+
+trap clean_up SIGHUP SIGINT SIGTERM
 
 locked() {
     local left=$((TIMER2))
@@ -74,31 +83,31 @@ locked() {
     fi
 }
 
-warning() { echo "Already started"; }
+warning() { echo "Already $state" >$API; }
 
-status() {
-    echo state:$state
-    echo "$((TIMER1 - total)) minutes left"
-}
+status() { echo "$state $((TIMER1 - total)) minutes left" >$API; }
 
 increment() {
     ((total++))
-    (( total == TIMER1 )) && locked
+    (( total >= TIMER1 )) && locked
+    #Update trayicon tooltip 
+    exec 3<> $FIFO
+    echo "tooltip:$state $((TIMER1 - total)) minutes left" >&3
 }
 
 started() {
+    #Don't update total when paused
+    [[ $state == stopped ]] && total=0 
     state=started
     date=$(date +%s)
-    total=0
 }
 
 paused() {
     local now=$(date +%s)
-    local time=60
-    [[ -n $testing ]] && time=$testing
-    local min=$(( (now - date) / time ))
+    # local time=${testing:-60}
+    # local min=$(( (now - date) / time ))
+    # ((total+=min))
     state=paused
-    ((total+=min))
 }
 
 stopped() {
@@ -128,5 +137,6 @@ while true; do
         $command
     } 39>$LOCK
 done
+
 
 
