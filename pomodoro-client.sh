@@ -6,10 +6,10 @@ readonly LOCK=/dev/shm/pomodoro.lock
 call() {
     while true;do
         {
-            flock -w 5 -x 39 || { echo "Couldn't acquire the lock" >&2; continue; }
+            flock -w 5 -x 7 || { echo "Couldn't acquire the lock" >&2; continue; }
             echo $1 > $API 
             break
-        } 39>$LOCK
+        } 7>$LOCK
     done
     echo "done  $1"
     sleep 0.1

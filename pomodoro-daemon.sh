@@ -66,11 +66,7 @@ locked() {
         msg=' --field=$"<b>Do you want to restart pomodoroBash?</b>":LBL '
         eval yad $general $image $buttons $forms $msg
         local ret=$?
-        if (($ret==0));then
-            started
-        else
-            stopped
-        fi
+        (($ret==0)) && started || stopped
     fi
 }
 
@@ -115,9 +111,9 @@ while true; do
     #wait TIMEOUT seconds or a new msg
     inotifywait -e modify $API -t $TIMEOUT &> /dev/null
     ret=$?
-    { #mutex on FD 39 $LOCK
+    { #mutex on FD 7 $LOCK
         if (($ret == 0)); then
-            flock -w 5 -x 39 || { echo "Couldn't acquire the lock" >&2; continue; }
+            flock -w 5 -x 7 || { echo "Couldn't acquire the lock" >&2; continue; }
             event=$(<$API)
             #Timeout event
         elif (($ret == 2)); then
@@ -126,7 +122,7 @@ while true; do
         command=${events[$state-$event]}
         [[ -z $command ]] && continue
         $command
-    } 39>$LOCK
+    } 7>$LOCK
 done
 
 
