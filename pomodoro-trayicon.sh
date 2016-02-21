@@ -10,7 +10,7 @@ pomodoro_trayicon () {
     readonly FIFO=/dev/shm/pomodoro.app
     readonly MENU='Change task!bash -c change_task!emblem-default|Stop!bash -c "daemon stop"!process-stop|Quit!bash -c quit!application-exit'
     local state=
-
+    
     [[ ! -p $FIFO ]] && { echo "Daemon not running"; return; }
 
     systray() {
@@ -60,6 +60,7 @@ pomodoro_trayicon () {
 
     # Attach FD to FIFO for reading/write (nonblock)
     exec 3<> $FIFO
+
 
     # Tell yad to read its stdin from FD
     yad --notification --listen --kill-parent \

@@ -30,16 +30,18 @@ events=(
 #For unit testing pass some number>0  (normally 1)
 #so It will work in that number of seconds than 60
 testing=$1
+#messages
 readonly API=/dev/shm/pomodoro
+#mutex
 readonly LOCK=/dev/shm/pomodoro.lock
+# pipe to work with trayicon
+readonly FIFO=/dev/shm/pomodoro.app
 #timeout pomodoro (minutes)
 readonly TIMER1=25
 #break time pomodoro (minutes)
 readonly TIMER2=5
 #timeout wait for events (seconds)
 readonly TIMEOUT=${testing:-60}
-# pipe to work with the trayicon
-readonly FIFO=/dev/shm/pomodoro.app
 >$API
 
 #Global default values
@@ -51,9 +53,13 @@ total=0
 mkfifo $FIFO
 
 clean_up() {
-    echo cleaninig up...
+    echo cleanning up...
     \rm -f $FIFO
     \rm -f $API
+    \rm -f $LOCK
+    exec 3<> $FIFO
+    #Close trayicon app
+    echo "quit" >&3
     exit
 }
 
@@ -127,6 +133,7 @@ stopped() {
 
 #Call initial state
 $state
+
 #Launch daemon
 while true; do
     #wait TIMEOUT seconds or a new msg
