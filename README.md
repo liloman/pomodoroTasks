@@ -20,7 +20,7 @@ A small hack project.
 1. flock
 2. inotify-tools 
 3. yad 
-4. taskwarrior (or any task management). *OPTIONAL*
+4. taskwarrior (or any task management). **OPTIONAL**
 
 Great tools all indeed!
 
