@@ -5,6 +5,7 @@ needs() { hash $1 &>/dev/null || { echo "Needs $1" >&2; exit 1; } }
 needs flock
 needs inotifywait
 needs yad
+needs task
 
 
 #Finite State Machine logic (FSM)
@@ -45,10 +46,15 @@ readonly FIFO=/dev/shm/pomodoro.app
 state=started
 date=$(date +%s)
 total=0
+
+[[ -p $FIFO ]] && { echo "Daemon already running"; exit 1; }
 mkfifo $FIFO
 
 clean_up() {
+    echo cleaninig up...
     \rm -f $FIFO
+    \rm -f $API
+    exit
 }
 
 trap clean_up SIGHUP SIGINT SIGTERM
@@ -56,7 +62,7 @@ trap clean_up SIGHUP SIGINT SIGTERM
 locked() {
     local left=$((TIMER2))
     [[ -n $testing ]] && ((left*=10)) || ((left*=60))
-    local general=' --model --on-top --sticky  --center --undecorated --title=PomodoroBash' 
+    local general=' --model --on-top --sticky  --center --undecorated --title=PomodoroTasks' 
     local timeout='  --timeout=$left --timeout-indicator=bottom '
     local image=' --image-on-top --image=images/pomodoro.png' 
     local buttons='  --buttons-layout=center --button="Back to work"!face-crying:0  '
@@ -72,23 +78,33 @@ locked() {
     else #the user didn't hit the back to work button
         image=' --image-on-top --image=images/clock.png' 
         buttons=' --buttons-layout=center --button="Restart(default)"!gtk-yes:0  --button="Stop it"!gtk-no:1 '
-        msg=' --field=$"<b>Do you want to restart pomodoroBash?</b>":LBL '
+        msg=' --field=$"<b>Do you want to restart pomodoroTasks?</b>":LBL '
         eval yad $general $image $buttons $forms $msg
         local ret=$?
         (($ret==0)) && started || stopped
     fi
 }
 
+get_active_task() { 
+    local uuid=$(task +ACTIVE uuids)
+    local desc=$(task _get $uuid.description)
+    local proj=$(task _get $uuid.project)
+    [[ -n $uuid ]] && echo "\nProject:$proj\n$desc\n" || echo "\nNo active task"
+}
+
 warning() { echo "Already $state" >$API; }
 
-status() { echo "$state $((TIMER1 - total)) minutes left" >$API; }
+status() { 
+    echo "$state $((TIMER1 - total)) minutes left $(get_active_task)" >$API 
+}
 
 increment() {
     ((total++))
     (( total >= TIMER1 )) && locked
-    #Update trayicon tooltip 
+    #read/write (nonblocking important!)
     exec 3<> $FIFO
-    echo "tooltip:$state $((TIMER1 - total)) minutes left" >&3
+    #Update trayicon tooltip 
+    echo "tooltip:$state $((TIMER1 - total)) minutes left $(get_active_task)" >&3
 }
 
 started() {
@@ -99,10 +115,6 @@ started() {
 }
 
 paused() {
-    local now=$(date +%s)
-    # local time=${testing:-60}
-    # local min=$(( (now - date) / time ))
-    # ((total+=min))
     state=paused
 }
 
@@ -120,13 +132,17 @@ while true; do
     #wait TIMEOUT seconds or a new msg
     inotifywait -e modify $API -t $TIMEOUT &> /dev/null
     ret=$?
-    { #mutex on FD 7 $LOCK
+    { #mutex $LOCK (FD 7) to read/write API and do the event
         if (($ret == 0)); then
             flock -w 5 -x 7 || { echo "Couldn't acquire the lock" >&2; continue; }
             event=$(<$API)
+            >$API
+            [[ $event = quit ]] && clean_up
             #Timeout event
         elif (($ret == 2)); then
             event=timeout
+        else
+            continue
         fi
         command=${events[$state-$event]}
         [[ -z $command ]] && continue

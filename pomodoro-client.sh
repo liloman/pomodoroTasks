@@ -13,16 +13,14 @@ call() {
     done
     sleep 0.1
     echo $(<$API)
-    >$API
 }
 
 
-echo starting
 date
 
 #call start
+# call stop
 call status
 # call status
 
 date
-echo done! 

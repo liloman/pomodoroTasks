@@ -41,6 +41,6 @@ Back to work:
 ###TODO
 
 - [x] Make the gtk trayicon app (yad rulez)
-- [ ] Taskwarrior integration
+- [x] Only one daemon instance
+- [ ] Taskwarrior integration (WIP)
 - [ ] Unit testing (bats)
-- [ ] Only one daemon instance
