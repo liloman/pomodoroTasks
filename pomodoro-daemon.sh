@@ -137,6 +137,9 @@ stopped() {
 #Call initial state
 $state
 
+#launch trayicon app
+./pomodoro-trayicon.sh &
+
 #Launch daemon
 while true; do
     #wait TIMEOUT seconds or a new msg
