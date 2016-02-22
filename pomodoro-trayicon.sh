@@ -43,6 +43,8 @@ pomodoro_trayicon () {
 
     change_task() {
         ./change_task_form.sh
+        #Update status
+        daemon status
     }
 
     quit() {
