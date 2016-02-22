@@ -92,10 +92,10 @@ locked() {
 }
 
 get_active_task() { 
-    local uuid=$(task +ACTIVE uuids)
-    local desc=$(task _get $uuid.description)
-    local proj=$(task _get $uuid.project)
-    [[ -n $uuid ]] && echo "\nProject:$proj\n$desc\n" || echo "\nNo active task"
+    local id=$(task +ACTIVE ids)
+    local desc=$(task _get $id.description)
+    local proj=$(task _get $id.project)
+    [[ -n $id ]] && echo "\nProject:$proj\n$desc\n" || echo "\nNo active task"
 }
 
 warning() { echo "Already $state" >$API; }
