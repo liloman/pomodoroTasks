@@ -54,5 +54,9 @@ Trayicon:
 
 - [x] Make the gtk trayicon app (yad rulez)
 - [x] Only one daemon instance
-- [ ] Taskwarrior integration (WIP)
+- [x] Taskwarrior integration 
 - [ ] Unit testing (bats)
+
+###FIXED
+
+1. Fix/report weird bug with combo-box values when changed from child form
