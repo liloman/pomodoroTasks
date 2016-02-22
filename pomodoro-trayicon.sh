@@ -42,7 +42,7 @@ pomodoro_trayicon () {
     }
 
     change_task() {
-        systray "icon:$1"
+        ./change_task_form.sh
     }
 
     quit() {
