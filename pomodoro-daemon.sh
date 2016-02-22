@@ -54,12 +54,15 @@ mkfifo $FIFO
 
 clean_up() {
     echo cleanning up...
-    \rm -f $FIFO
-    \rm -f $API
-    \rm -f $LOCK
     exec 3<> $FIFO
     #Close trayicon app
     echo "quit" >&3
+    #Close pipe
+    exec 3>&-
+    sleep 1
+    \rm -f $FIFO
+    \rm -f $API
+    \rm -f $LOCK
     exit
 }
 
