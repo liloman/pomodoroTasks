@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Pomodoro daemon with FSM
 
+#Change to local dir
+set -x
+cd "${0%/*}"
+set +x
+
 needs() { hash $1 &>/dev/null || { echo "Needs $1" >&2; exit 1; } }
 needs flock
 needs inotifywait
@@ -60,13 +65,11 @@ clean_up() {
     #Close pipe
     exec 3>&-
     sleep 1
-    \rm -f $FIFO
-    \rm -f $API
-    \rm -f $LOCK
-    exit
+    \rm -f $FIFO $API $LOCK
+    exit $?
 }
 
-trap clean_up SIGHUP SIGINT SIGTERM
+trap clean_up SIGHUP SIGINT SIGTERM SIGKILL
 
 locked() {
     local left=$((TIMER2))
