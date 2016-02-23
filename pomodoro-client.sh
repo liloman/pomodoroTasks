@@ -18,10 +18,10 @@ call() {
 
 date
 
-#call start
+call start
+#call pause
 #call stop
-call quit
-call status
+#call quit
 # call status
 
 date

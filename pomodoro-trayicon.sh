@@ -75,6 +75,7 @@ pomodoro_trayicon () {
         --image="$ICON_STARTED" \
         --menu="$MENU" \
         --command="bash -c left_click" <&3 || echo "${0##*/} already running" &
+
     #Update the trayicon
     daemon status
 }

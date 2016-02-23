@@ -122,13 +122,28 @@ warning() { echo "Already $state" >$API; }
 
 status() { echo "$state $((TIMER1 - total)) minutes left $(get_active_task)" >$API; }
 
-increment() {
-    ((total++))
-    (( total >= TIMER1 )) && locked
-    #read/write (nonblocking important!)
+update_trayicon(){
+    local ICON_STARTED=images/iconStarted.png
+    local ICON_PAUSED=images/iconPaused.png
+    local ICON_STOPPED=images/iconStopped.png
+    #read/write (nonblocking/async important!)
     exec 3<> $FIFO
     #Update trayicon tooltip 
     echo "tooltip:$state $((TIMER1 - total)) minutes left $(get_active_task)" >&3
+    case $state in
+        start*) echo icon:$ICON_STARTED >&3
+            ;;
+        pause*) echo icon:$ICON_PAUSED >&3
+            ;;
+        stop*)  echo icon:$ICON_STOPPED >&3
+            ;;
+    esac
+}
+
+increment() {
+    ((total++))
+    (( total >= TIMER1 )) && locked
+    update_trayicon
 }
 
 started() {
@@ -136,16 +151,19 @@ started() {
     [[ $state == stopped ]] && total=0 
     state=started
     date=$(date +%s)
+    update_trayicon
 }
 
 paused() {
     state=paused
+    update_trayicon
 }
 
 stopped() {
     state=stopped
     date=0
     total=0
+    update_trayicon
 }
 
 
