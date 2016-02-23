@@ -45,6 +45,12 @@ readonly FIFO=/dev/shm/pomodoro.app
 readonly TIMER1=25
 #break time pomodoro (minutes)
 readonly TIMER2=5
+#long break time pomodoro (minutes)
+readonly TIMER3=15
+#Number of breaks to take a long break (TIMER3)
+readonly MAXBREAKS=4
+#Counter for breaks
+local BREAKS=0
 #timeout wait for events (seconds)
 readonly TIMEOUT=${testing:-60}
 >$API
@@ -69,17 +75,25 @@ clean_up() {
     exit $?
 }
 
-trap clean_up SIGHUP SIGINT SIGTERM SIGKILL
+trap clean_up SIGHUP SIGINT SIGTERM 
 
 locked() {
-    local left=$((TIMER2))
+    #Increment number of breaks it
+    ((BREAKS++))
+    local left=$TIMER2
+    local msg=' --field=$"<b>Go away you fool\!</b>(break $BREAKSº)":LBL '
+    #Long break if $BREAKS
+    if ((BREAKS == MAXBREAKS));then
+        left=$TIMER3
+        msg=' --field=$"<b>Super rest\!</b>($TIMER3 minutes)":LBL '
+        BREAKS=0
+    fi
     [[ -n $testing ]] && ((left*=10)) || ((left*=60))
     local general=' --model --on-top --sticky  --center --undecorated --title=PomodoroTasks' 
     local timeout='  --timeout=$left --timeout-indicator=bottom '
     local image=' --image-on-top --image=images/pomodoro.png' 
     local buttons='  --buttons-layout=center --button="Back to work"!face-crying:0  '
     local forms=' --align=center --form'
-    local msg=' --field=$"<b>Go away you fool\!</b>":LBL '
     state=locked
     date=0
     total=0
@@ -89,7 +103,7 @@ locked() {
         started
     else #the user didn't hit the back to work button
         image=' --image-on-top --image=images/clock.png' 
-        buttons=' --buttons-layout=center --button="Restart(default)"!gtk-yes:0  --button="Stop it"!gtk-no:1 '
+        buttons=' --buttons-layout=center --button="Yes(default)"!gtk-yes:0  --button="No"!gtk-no:1 '
         msg=' --field=$"<b>Do you want to restart pomodoroTasks?</b>":LBL '
         eval yad $general $image $buttons $forms $msg
         local ret=$?
