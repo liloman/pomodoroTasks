@@ -97,14 +97,17 @@ IFS='|' opt=($ret)
 selected_task_id=${opt[0]%%[[:space:]]*}
 selected_done=${opt[2]}
 
+# If current active task
+if [[ -n $current_task_id ]]; then
+    if [[ $selected_done == FALSE ]]; then
+        task $current_task_id stop &> /dev/null
+    else
+        task $current_task_id done  &> /dev/null
+    fi
+fi
+
 # Not task selected
 (( selected_task_id == 0 )) && exit 
-
-if [[ $selected_done == FALSE ]]; then
-    task $current_task_id stop &> /dev/null
-else
-    task $current_task_id done  &> /dev/null
-fi
 
 task $selected_task_id start &> /dev/null
 }
