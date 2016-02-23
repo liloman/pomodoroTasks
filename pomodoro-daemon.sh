@@ -2,9 +2,7 @@
 # Pomodoro daemon with FSM
 
 #Change to local dir
-set -x
 cd "${0%/*}"
-set +x
 
 needs() { hash $1 &>/dev/null || { echo "Needs $1" >&2; exit 1; } }
 needs flock
@@ -50,7 +48,7 @@ readonly TIMER3=15
 #Number of breaks to take a long break (TIMER3)
 readonly MAXBREAKS=4
 #Counter for breaks
-local BREAKS=0
+BREAKS=0
 #timeout wait for events (seconds)
 readonly TIMEOUT=${testing:-60}
 >$API
