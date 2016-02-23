@@ -1,9 +1,14 @@
 #!/bin/bash
 # Pomodoro systray icon app
 
+#Change to real local dir
+dir="$(readlink $0)"
+cd "${dir%/*}"
+
 pomodoro_trayicon () {
     readonly API=/dev/shm/pomodoro
     readonly LOCK=/dev/shm/pomodoro.lock
+    readonly PID=/dev/shm/pomodoroapp.pid
     readonly ICON_STARTED=images/iconStarted.png
     readonly ICON_PAUSED=images/iconPaused.png
     readonly ICON_STOPPED=images/iconStopped.png
@@ -63,15 +68,13 @@ pomodoro_trayicon () {
     # Attach FD to FIFO for reading/write (nonblock)
     exec 3<> $FIFO
 
-
-    # Tell yad to read its stdin from FD
-    yad --notification --listen --kill-parent \
+    # Lock it up and tell yad to read its stdin from FD
+    flock -xn $PID yad --notification --listen --kill-parent \
         --text-align=center --no-middle \
         --text="pomodoroTasks" \
         --image="$ICON_STARTED" \
         --menu="$MENU" \
-        --command="bash -c left_click" <&3 &
-
+        --command="bash -c left_click" <&3 || echo "${0##*/} already running" &
     #Update the trayicon
     daemon status
 }

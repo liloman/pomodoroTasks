@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Pomodoro daemon with FSM
 
-#Change to local dir
-cd "${0%/*}"
+#Change to real local dir
+dir="$(readlink $0)"
+cd "${dir%/*}"
 
 needs() { hash $1 &>/dev/null || { echo "Needs $1" >&2; exit 1; } }
 needs flock
@@ -87,11 +88,11 @@ locked() {
         BREAKS=0
     fi
     [[ -n $testing ]] && ((left*=10)) || ((left*=60))
-    local general=' --model --on-top --sticky  --center --undecorated --title=PomodoroTasks' 
-    local timeout='  --timeout=$left --timeout-indicator=bottom '
+    readonly general='  --window-icon=images/iconStarted.png --on-top --sticky  --center --undecorated --title=PomodoroTasks' 
+    readonly timeout='  --timeout=$left --timeout-indicator=bottom '
+    readonly forms=' --align=center --form'
     local image=' --image-on-top --image=images/pomodoro.png' 
     local buttons='  --buttons-layout=center --button="Back to work"!face-crying:0  '
-    local forms=' --align=center --form'
     state=locked
     date=0
     total=0
@@ -110,10 +111,11 @@ locked() {
 }
 
 get_active_task() { 
-    local id=$(task +ACTIVE ids)
-    local desc=$(task _get $id.description)
-    local proj=$(task _get $id.project)
-    [[ -n $id ]] && echo "\nProject:$proj\n$desc\n" || echo "\nNo active task"
+    readonly id=$(task +ACTIVE ids)
+    [[ -z $id ]] && { echo "\nNo active task"; return; }
+    readonly desc=$(task _get $id.description)
+    readonly proj=$(task _get $id.project)
+    echo "\nProject:$proj\n$desc\n" 
 }
 
 warning() { echo "Already $state" >$API; }

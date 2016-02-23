@@ -68,7 +68,7 @@ Minimalistic implementation with FSM (Finite State Machine), mutex (flock) and s
 - [x] Make the gtk trayicon app (yad rulez)
 - [x] Only one daemon instance
 - [x] Taskwarrior integration 
-- [ ] Unit testing (bats)
+- [ ] Unit testing? (bats)
 
 ###FIXED
 

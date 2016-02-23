@@ -19,7 +19,8 @@ call() {
 date
 
 #call start
-# call stop
+#call stop
+call quit
 call status
 # call status
 
