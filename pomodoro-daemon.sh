@@ -106,9 +106,7 @@ get_active_task() {
 
 warning() { echo "Already $state" >$API; }
 
-status() { 
-    echo "$state $((TIMER1 - total)) minutes left $(get_active_task)" >$API 
-}
+status() { echo "$state $((TIMER1 - total)) minutes left $(get_active_task)" >$API; }
 
 increment() {
     ((total++))

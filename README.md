@@ -4,31 +4,23 @@ Don't make any excuse anymore to not use the [Pomodoro Technique](https://en.wik
 
 ###Info
 
-Boilerplate implementation of the pomodoro technique in bash script.
+Pomodoro technique allows you to concentrate on the current task and take short breaks meanwhile works.
+If you get that and join it with a task manager alike taskwarrior (or any other) you can have a complete workflow, accounting the time spend on any task meanwhile you take the proper rests for your brain, body, life and eyes. :)
 
-It works with a client/server architecture.
-
-Minimalistic implementation with FSM (Finite State Machine), some mutex (flock) and some bash powa.
-
-The typical workflow is start the daemon once log in (systemd,openbox autostart ...) and 
-then control it with the simple trayicon app (not a must so client included)
-
-A small hack project.
+A week hack project.
 
 ###Dependencies
 
 1. flock
 2. inotify-tools 
 3. yad 
-4. taskwarrior (or any task management). **OPTIONAL**
+4. **OPTIONAL** taskwarrior (or any task management). You can eliminate/modify this part very easily. 
 
 Great tools all indeed!
 
 ###Why yet another pomodoro app?
 
-Emmm...for fun? :o:
-
-Just serious, there isn't anything alike for linux AFAIK.
+There isn't anything with taskwarrior alike for linux AFAIK.  :o:
 
 ###Screenshots
 
@@ -50,6 +42,27 @@ Trayicon:
 ![Stopped](images/screenshots/stopped.png "Stopped")
 
 
+![Change Task](images/screenshots/changeTask.png "Change task")
+
+![Change Task 2](images/screenshots/changeTask2.png "Change task 2")
+
+![Add new Task](images/screenshots/addTask.png "Add new Task")
+
+
+###Install 
+
+The typical workflow is start the daemon once log in (systemd,openbox autostart, bash_profile ...) and 
+then control it with the simple trayicon app.
+
+There is included a simple cli client tool too.
+
+###Spec
+
+Boilerplate implementation of the pomodoro technique with a bash written client/server architecture.
+
+Minimalistic implementation with FSM (Finite State Machine), mutex (flock) and some bash niceness.
+
+
 ###TODO
 
 - [x] Make the gtk trayicon app (yad rulez)
@@ -59,4 +72,4 @@ Trayicon:
 
 ###FIXED
 
-1. Fix/report weird bug with combo-box values when changed from child form
+1. ~~Fix/report weird bug with combo-box values when changed from child form~~

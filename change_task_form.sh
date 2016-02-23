@@ -69,7 +69,7 @@ add_new_task(){
     new_id=${ret##*[[:space:]]};
 
     # Update the field 1 (CB) with the new CB list values. Selecting the new_id (^)
-    echo "1 $tasks#^$new_id [$project]-$description"
+    echo "1:$tasks#^$new_id [$project]-$description"
 }
 
 local tasks="0 ------------------------------------  None ----------------------------------- #"
