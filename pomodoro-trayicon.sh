@@ -11,17 +11,17 @@ pomodoro_trayicon () {
     readonly API=/dev/shm/pomodoro
     readonly LOCK=/dev/shm/pomodoro.lock
     readonly PID=/dev/shm/pomodoroapp.pid
+    readonly APP=/dev/shm/pomodoro.app
     readonly ICON_STARTED=images/iconStarted.png
     readonly ICON_PAUSED=images/iconPaused.png
     readonly ICON_STOPPED=images/iconStopped.png
-    readonly FIFO=/dev/shm/pomodoro.app
     readonly MENU='Change task!bash -c change_task!emblem-default|Stop!bash -c "daemon stop"!process-stop|Quit!bash -c quit!application-exit'
     local state=
     
-    [[ ! -p $FIFO ]] && { echo "Daemon not running"; return; }
+    [[ ! -p $APP ]] && { echo "Daemon not running"; return; }
 
     systray() {
-        exec 3<> $FIFO
+        exec 3<> $APP
         echo "$1" >&3
     }
 
@@ -36,8 +36,7 @@ pomodoro_trayicon () {
         sleep 0.1
         if [[ $1 == status ]]; then
             state=$(<$API)
-            exec 3<> $FIFO
-            echo "tooltip:$state" >&3
+            systray "tooltip:$state" 
             case $state in
                 start*) systray icon:$ICON_STARTED ;;
                 pause*) systray icon:$ICON_PAUSED ;;
@@ -65,10 +64,10 @@ pomodoro_trayicon () {
     }
 
     export -f left_click daemon quit systray change_task
-    export API LOCK ICON_STARTED ICON_PAUSED ICON_STOPPED FIFO MENU state
+    export API LOCK ICON_STARTED ICON_PAUSED ICON_STOPPED APP MENU state
 
-    # Attach FD to FIFO for reading/write (nonblock)
-    exec 3<> $FIFO
+    # Attach FD to APP for reading/write (nonblock)
+    exec 3<> $APP
 
     # Lock it up and tell yad to read its stdin from FD
     flock -xn $PID yad --notification --listen --kill-parent \

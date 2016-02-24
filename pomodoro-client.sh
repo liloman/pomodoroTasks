@@ -2,7 +2,7 @@
 #Simple client for pomodoro-daemon.sh
 readonly API=/dev/shm/pomodoro
 readonly LOCK=/dev/shm/pomodoro.lock
-readonly FIFO=/dev/shm/pomodoro.app
+readonly APP=/dev/shm/pomodoro.app
 
 call() {
 
@@ -15,13 +15,13 @@ call() {
     done
     #wait for response
     sleep 0.1
-    echo $(<$API)
+    echo -e $(<$API)
 }
 
 usage() { echo "Unknown option: try start,pause,stop,status or quit to close the daemon"; }
 
 com() {
-    [[ ! -p $FIFO ]] && { echo "Daemon not running"; return; }
+    [[ ! -p $APP ]] && { echo "Daemon not running"; return; }
     call $1
     call status
 }

@@ -41,7 +41,9 @@ readonly API=/dev/shm/pomodoro
 #mutex
 readonly LOCK=/dev/shm/pomodoro.lock
 # pipe to work with trayicon
-readonly FIFO=/dev/shm/pomodoro.app
+readonly APP=/dev/shm/pomodoro.app
+#lock app
+readonly PID=/dev/shm/pomodoroapp.pid
 #timeout pomodoro (minutes)
 readonly TIMER1=25
 #break time pomodoro (minutes)
@@ -61,18 +63,18 @@ state=started
 date=$(date +%s)
 total=0
 
-[[ -p $FIFO ]] && { echo "Daemon already running"; exit 1; }
-mkfifo $FIFO
+[[ -p $APP ]] && { echo "Daemon already running"; exit 1; }
+mkfifo $APP
 
 clean_up() {
     echo cleanning up...
-    exec 3<> $FIFO
+    exec 3<> $APP
     #Close trayicon app
     echo "quit" >&3
     #Close pipe
     exec 3>&-
     sleep 1
-    \rm -f $FIFO $API $LOCK
+    \rm $APP $API $LOCK
     exit $?
 }
 
@@ -124,20 +126,27 @@ warning() { echo "Already $state" >$API; }
 
 status() { echo "$state $((TIMER1 - total)) minutes left $(get_active_task)" >$API; }
 
+systray() {
+    flock -xn $PID true || 
+    {
+        #nonblocking <>
+        exec 3<> $APP
+        echo "$1" >&3
+    }
+}
+
 update_trayicon(){
     local ICON_STARTED=images/iconStarted.png
     local ICON_PAUSED=images/iconPaused.png
     local ICON_STOPPED=images/iconStopped.png
-    #read/write (nonblocking/async important!)
-    exec 3<> $FIFO
     #Update trayicon tooltip 
-    echo "tooltip:$state $((TIMER1 - total)) minutes left $(get_active_task)" >&3
+    systray "tooltip:$state $((TIMER1 - total)) minutes left $(get_active_task)" 
     case $state in
-        start*) echo icon:$ICON_STARTED >&3
+        start*) systray icon:$ICON_STARTED 
             ;;
-        pause*) echo icon:$ICON_PAUSED >&3
+        pause*) systray icon:$ICON_PAUSED 
             ;;
-        stop*)  echo icon:$ICON_STOPPED >&3
+        stop*)  systray icon:$ICON_STOPPED 
             ;;
     esac
 }

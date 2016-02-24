@@ -14,7 +14,7 @@ A week hack project.
 1. flock
 2. inotify-tools 
 3. yad 
-4. **OPTIONAL** taskwarrior (or any task management). You can eliminate/modify this part very easily. 
+4. **OPTIONAL** taskwarrior (or any task management). You can modify/eliminate this part very easily. 
 
 Great tools all indeed!
 
@@ -68,6 +68,7 @@ Minimalistic implementation with FSM (Finite State Machine), mutex (flock) and s
 - [x] Make the gtk trayicon app (yad rulez)
 - [x] Only one daemon instance
 - [x] Taskwarrior integration 
+- [ ] dbus branch?
 - [ ] Unit testing? (bats)
 
 ###FIXED
