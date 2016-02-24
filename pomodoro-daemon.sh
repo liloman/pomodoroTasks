@@ -2,8 +2,9 @@
 # Pomodoro daemon with FSM
 
 #Change to real local dir
-dir="$(readlink $0)"
-cd "${dir%/*}"
+path="$(readlink $0)"
+dir="${path%/*}"
+cd "$dir"
 
 needs() { hash $1 &>/dev/null || { echo "Needs $1" >&2; exit 1; } }
 needs flock
@@ -171,7 +172,7 @@ stopped() {
 $state
 
 #launch trayicon app
-./pomodoro-trayicon.sh &
+"$dir/pomodoro-trayicon.sh" &
 
 #Launch daemon
 while true; do

@@ -2,8 +2,9 @@
 # Pomodoro systray icon app
 
 #Change to real local dir
-dir="$(readlink $0)"
-cd "${dir%/*}"
+path="$(readlink $0)"
+dir="${path%/*}"
+cd "$dir"
 
 pomodoro_trayicon () {
     readonly API=/dev/shm/pomodoro
