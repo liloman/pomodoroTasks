@@ -2,7 +2,8 @@
 # Pomodoro systray icon app
 
 #Change to real local dir
-path="$(readlink $0)"
+file="${BASH_SOURCE[0]}"
+[[ -L $file ]] && path="$(readlink "$file")" || path="$file"
 dir="${path%/*}"
 cd "$dir"
 
