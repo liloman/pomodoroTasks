@@ -38,7 +38,7 @@ add_new_task(){
     while IFS= read -r project; 
     do 
         projects+="$project#"; 
-    done <<< "$(task _projects)"
+    done <<< "$(task rc.list.all.projects=1 _projects)"
     projects="${projects%#}"
     readonly fields=" --field Description '' --field Project:CBE '$projects' "
 
