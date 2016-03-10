@@ -33,14 +33,18 @@ pomodoro_trayicon () {
                 break
             } 7>$LOCK
         done
-        sleep 0.1
+        #nasty timing
+        sleep 0.3
         if [[ $1 == status ]]; then
             state=$(<$API)
             systray "tooltip:$state" 
             case $state in
-                start*) systray icon:$ICON_STARTED ;;
-                pause*) systray icon:$ICON_PAUSED ;;
-                 stop*) systray icon:$ICON_STOPPED ;;
+                start*) systray icon:$ICON_STARTED 
+                    ;;
+                pause*) systray icon:$ICON_PAUSED 
+                    ;;
+                stop* ) systray icon:$ICON_STOPPED
+                    ;;
             esac
         else
             daemon status 

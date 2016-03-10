@@ -18,12 +18,12 @@ call() {
     echo -e $(<$API)
 }
 
-usage() { echo "Unknown option: try start,pause,stop,status or quit to close the daemon"; }
+usage() { echo "Unknown option: try start,pause,stop,reset,status or quit to close the daemon"; }
 
 com() {
     [[ ! -p $APP ]] && { echo "Daemon not running"; return; }
     call $1
-    call status
+    [[ $1 != status ]] && call status
 }
 
 case $1 in

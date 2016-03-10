@@ -65,6 +65,7 @@ BREAKS=0
 state=started
 date=$(date +%s)
 total=0
+last_task_id=
 
 [[ -p $APP ]] && { echo "Daemon already running"; exit 1; }
 mkfifo $APP
@@ -84,6 +85,8 @@ clean_up() {
 trap clean_up SIGHUP SIGINT SIGTERM 
 
 locked() {
+    #Stop and stop current task
+    stopped
     #Increment number of breaks it
     ((BREAKS++))
     local left=$TIMER2
@@ -118,11 +121,22 @@ locked() {
 }
 
 get_active_task() { 
-    readonly id=$(task +ACTIVE ids)
-    [[ -z $id ]] && { echo "\nNo active task"; return; }
-    readonly desc=$(task _get $id.description)
-    readonly proj=$(task _get $id.project)
-    echo "\nProject:$proj\n$desc\n" 
+    local active_id
+    case $state in
+        pause*|stop*) active_id=$last_task_id
+            ;;
+        *           ) active_id=$(task +ACTIVE ids)
+            ;;
+    esac
+    [[ -z $active_id ]] && { echo "\nNo active task"; return; }
+    readonly desc=$(task _get $active_id.description)
+    readonly proj=$(task _get $active_id.project)
+    case $state in
+        pause*|stop*) echo "\nLast Project($active_id):$proj\n$desc\n" 
+            ;;
+        *           ) echo "\nProject:$proj\n$desc\n" 
+            ;;
+    esac
 }
 
 warning() { echo "Already $state" >$API; }
@@ -144,6 +158,7 @@ update_trayicon(){
     local ICON_STOPPED=images/iconStopped.png
     #Update trayicon tooltip 
     systray "tooltip:$state $((TIMER1 - total)) minutes left $(get_active_task)" 
+
     case $state in
         start*) systray icon:$ICON_STARTED 
             ;;
@@ -161,6 +176,13 @@ increment() {
 }
 
 started() {
+    local check_id=$(task +ACTIVE ids) 
+    #If resumed from pause/stop without changing the current task from CLI/X
+    if [[ -n $last_task_id && -z $check_id ]]; then
+        task $last_task_id start
+    else
+        last_task_id=$check_id
+    fi
     #Don't update total when paused
     [[ $state == stopped ]] && total=0 
     state=started
@@ -168,8 +190,25 @@ started() {
     update_trayicon
 }
 
+#Save last task after going to pause/stop to account proper work time on a task
+save_last_task() {
+    local check_id
+    case $state in 
+        pause*|stop*) 
+            check_id=$(task +ACTIVE ids) 
+            [[ -n $check_id ]]  && last_task_id=$check_id
+            ;; 
+        *           ) 
+            last_task_id=$(task +ACTIVE ids) 
+            ;; 
+    esac
+    [[ -z $last_task_id ]] && { return; }
+    task $last_task_id stop
+}
+
 paused() {
     state=paused
+    save_last_task
     update_trayicon
 }
 
@@ -177,6 +216,7 @@ stopped() {
     state=stopped
     date=0
     total=0
+    save_last_task
     update_trayicon
 }
 
