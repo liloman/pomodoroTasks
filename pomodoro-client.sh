@@ -27,7 +27,7 @@ com() {
 }
 
 case $1 in
-    start|pause|stop|status|quit)  com $1
+    start|pause|stop|reset|status|quit)  com $1
         ;;
     *                           ) usage
         ;;

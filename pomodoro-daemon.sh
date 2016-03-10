@@ -21,14 +21,17 @@ events=(
 [started-start]=warning 
 [started-pause]=paused 
 [started-stop]=stopped
+[started-reset]=resetted
 [started-timeout]=increment
 [started-status]=status
 [paused-start]=started
 [paused-stop]=stopped
+[paused-reset]=resetted
 [paused-pause]=warning
 [paused-status]=status
 [stopped-start]=started
 [stopped-stop]=warning
+[stopped-reset]=resetted
 [stopped-status]=status
 )
 
@@ -52,10 +55,10 @@ readonly TIMER2=5
 readonly TIMER3=15
 #Number of breaks to take a long break (TIMER3)
 readonly MAXBREAKS=4
-#Counter for breaks
-BREAKS=0
 #timeout wait for events (seconds)
 readonly TIMEOUT=${testing:-60}
+#Counter for breaks
+BREAKS=0
 >$API
 
 #Global default values
@@ -177,6 +180,10 @@ stopped() {
     update_trayicon
 }
 
+resetted() {
+    state=stopped
+    started
+}
 
 #Call initial state
 $state
