@@ -62,7 +62,7 @@ BREAKS=0
 >$API
 
 #Global default values
-state=started
+state=stopped
 date=$(date +%s)
 total=0
 last_task_id=
