@@ -23,7 +23,7 @@ usage() { echo "Unknown option: try start,pause,stop,reset,status or quit to clo
 com() {
     [[ ! -p $APP ]] && { echo "Daemon not running"; return; }
     call $1
-    [[ $1 != status ]] && call status
+    [[ $1 != status && $1 != quit ]] && call status
 }
 
 case $1 in

@@ -11,7 +11,10 @@ needs() { hash $1 &>/dev/null || { echo "Needs $1" >&2; exit 1; } }
 needs flock
 needs inotifywait
 needs yad
+#Taskwarrior
 needs task
+#Timewarrior
+needs timew
 
 
 #Finite State Machine logic (FSM)
@@ -87,6 +90,8 @@ trap clean_up SIGHUP SIGINT SIGTERM
 locked() {
     #Stop and stop current task
     stopped
+    #Start tracking pomodoro_timeout with timewarrior
+    timew start 'pomodoro_timeout'
     #Increment number of breaks it
     ((BREAKS++))
     local left=$TIMER2
@@ -109,6 +114,8 @@ locked() {
     eval yad $general $timeout  $image $buttons $forms $msg
     local ret=$?
     if (($ret==0));then
+        #Stop tracking pomodoro timeout with timewarrior
+        timew stop 
         started
     else #the user didn't hit the back to work button
         image=' --image-on-top --image=images/clock.png' 
@@ -116,6 +123,8 @@ locked() {
         msg=' --field=$"<b>Do you want to restart pomodoroTasks?</b>":LBL '
         eval yad $general $image $buttons $forms $msg
         local ret=$?
+        #Stop tracking pomodoro_timeout with timewarrior anyway
+        timew stop 
         (($ret==0)) && started || stopped
     fi
 }
@@ -222,6 +231,7 @@ stopped() {
 
 resetted() {
     state=stopped
+    BREAKS=0
     started
 }
 
