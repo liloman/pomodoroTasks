@@ -21,6 +21,7 @@ needs timew
 declare -A events
 # [from-event]=to
 events=(
+[started-stop]=stopped
 [started-start]=warning 
 [started-pause]=paused 
 [started-stop]=stopped
@@ -36,20 +37,27 @@ events=(
 [stopped-stop]=warning
 [stopped-reset]=resetted
 [stopped-status]=status
+[started-dry_start]=warning 
+[started-dry_stop]=dry_stopped
+[stopped-dry_start]=dry_started
+[paused-dry_start]=dry_started
+[stopped-dry_stop]=warning
 )
 
 
 #For unit testing pass some number>0  (normally 1)
 #so It will work in that number of seconds than 60
 testing=$1
-#messages
+#messages between pomodoro-*
 readonly API=/dev/shm/pomodoro
-#mutex
+#mutex (to read API)
 readonly LOCK=/dev/shm/pomodoro.lock
 # pipe to work with trayicon
 readonly APP=/dev/shm/pomodoro.app
-#lock app
+#lock app (only one at a time)
 readonly PID=/dev/shm/pomodoroapp.pid
+#messages with on-hook.pomodoro (taskwarrior hook)
+readonly NOHOOK=/dev/shm/pomodoro.onhook
 #timeout pomodoro (minutes)
 readonly TIMER1=25
 #break time pomodoro (minutes)
@@ -65,9 +73,12 @@ BREAKS=0
 >$API
 
 #Global default values
-state=stopped
+state=$(task +ACTIVE ids)
+#set the initial state to the real state
+[[ -z $state ]] && state=stopped || state=started
 date=$(date +%s)
-total=0
+#Total time elapsed
+time_elapsed=0
 last_task_id=
 
 [[ -p $APP ]] && { echo "Daemon already running"; exit 1; }
@@ -110,7 +121,7 @@ locked() {
     local buttons='  --buttons-layout=center --button="Back to work"!face-crying:0  '
     state=locked
     date=0
-    total=0
+    time_elapsed=0
     eval yad $general $timeout  $image $buttons $forms $msg
     local ret=$?
     if (($ret==0));then
@@ -150,7 +161,7 @@ get_active_task() {
 
 warning() { echo "Already $state" >$API; }
 
-status() { echo "$state $((TIMER1 - total)) minutes left $(get_active_task)" >$API; }
+status() { echo "$state $((TIMER1 - time_elapsed)) minutes left $(get_active_task)" >$API; }
 
 systray() {
     flock -xn $PID true || 
@@ -166,7 +177,7 @@ update_trayicon(){
     local ICON_PAUSED=images/iconPaused.png
     local ICON_STOPPED=images/iconStopped.png
     #Update trayicon tooltip 
-    systray "tooltip:$state $((TIMER1 - total)) minutes left $(get_active_task)" 
+    systray "tooltip:$state $((TIMER1 - time_elapsed)) minutes left $(get_active_task)" 
 
     case $state in
         start*) systray icon:$ICON_STARTED 
@@ -179,23 +190,8 @@ update_trayicon(){
 }
 
 increment() {
-    ((total++))
-    (( total >= TIMER1 )) && locked
-    update_trayicon
-}
-
-started() {
-    local check_id=$(task +ACTIVE ids) 
-    #If resumed from pause/stop without changing the current task from CLI/X
-    if [[ -n $last_task_id && -z $check_id ]]; then
-        task $last_task_id start
-    else
-        last_task_id=$check_id
-    fi
-    #Don't update total when paused
-    [[ $state == stopped ]] && total=0 
-    state=started
-    date=$(date +%s)
+    ((time_elapsed++))
+    (( time_elapsed >= TIMER1 )) && locked
     update_trayicon
 }
 
@@ -212,8 +208,44 @@ save_last_task() {
             ;; 
     esac
     [[ -z $last_task_id ]] && { return; }
-    task $last_task_id stop
+    if [[ -z $1 ]]; then
+        #Disable the on-modify.pomodoro taskwarrior hook
+        touch $NOHOOK
+        task $last_task_id stop
+        #Enable
+        \rm -f $NOHOOK
+    fi
 }
+
+dry_started() {
+    #Don't update time_elapsed when paused
+    [[ $state == stopped ]] && time_elapsed=0 
+    state=started
+    date=$(date +%s)
+    # Can't get the id cause it's activated on taskwarrior hook, so no active already
+    # wait 1 minute to refresh (TODO)
+    update_trayicon
+}
+
+started() {
+    local check_id=$(task +ACTIVE ids) 
+    #If resumed from pause/stop without changing the current task from GUI
+    if [[ -n $last_task_id && -z $check_id ]]; then
+        #Disable the on-modify.pomodoro taskwarrior hook
+        touch $NOHOOK
+        task $last_task_id start
+        #Enable
+        \rm -f $NOHOOK
+    else
+        last_task_id=$check_id
+    fi
+    #Don't update time_elapsed when paused
+    [[ $state == stopped ]] && time_elapsed=0 
+    state=started
+    date=$(date +%s)
+    update_trayicon
+}
+
 
 paused() {
     state=paused
@@ -221,10 +253,18 @@ paused() {
     update_trayicon
 }
 
+dry_stopped() {
+    state=stopped
+    date=0
+    time_elapsed=0
+    save_last_task dry
+    update_trayicon
+}
+
 stopped() {
     state=stopped
     date=0
-    total=0
+    time_elapsed=0
     save_last_task
     update_trayicon
 }
@@ -248,6 +288,7 @@ while true; do
     ret=$?
     { #mutex $LOCK (FD 7) to read/write API and do the event
         if (($ret == 0)); then
+            #Should check several times otherwise quit
             flock -w 5 -x 7 || { echo "Couldn't acquire the lock" >&2; continue; }
             event=$(<$API)
             >$API

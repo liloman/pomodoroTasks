@@ -7,14 +7,15 @@ Don't make any excuse anymore to not use the [Pomodoro Technique](https://en.wik
 Pomodoro technique allows you to concentrate on the current task and take short breaks meanwhile works.
 If you get that and join it with a task manager alike taskwarrior (or any other) you can have a complete workflow, accounting the time spend on any task meanwhile you take the proper rests for your brain, body, life and eyes. :)
 
-A week hack project.
+A "week" hack project.
+
 
 ###Dependencies
 
 1. flock
 2. inotify-tools 
 3. yad 
-4. **OPTIONAL** taskwarrior (or any task management). You can modify/eliminate this part very easily. 
+4. **OPTIONAL** taskwarrior & timewarrior (or any task management). You can modify/eliminate this part very easily. 
 
 Great tools all indeed!
 
@@ -68,9 +69,12 @@ Minimalistic implementation with FSM (Finite State Machine), mutex (flock) and s
 - [x] Make the gtk trayicon app (yad rulez)
 - [x] Only one daemon instance
 - [x] Taskwarrior integration 
+- [ ] (80% done) Timewarrior integration to track the complete lifespan of your computer. ;)
+- [ ] Dont wait a minute to refresh the trayicon when used the cli
 - [ ] dbus branch?
 - [ ] Unit testing? (bats)
 
 ###FIXED
 
 1. ~~Fix/report weird bug with combo-box values when changed from child form~~
+2. ~~Update the trayicon properly when used the cli (task command)~~
