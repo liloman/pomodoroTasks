@@ -69,7 +69,7 @@ Minimalistic implementation with FSM (Finite State Machine), mutex (flock) and s
 - [x] Make the gtk trayicon app (yad rulez)
 - [x] Only one daemon instance
 - [x] Taskwarrior integration 
-- [ ] (80% done) Timewarrior integration to track the complete lifespan of your computer. ;)
+- [ ] \(80% done\) Timewarrior integration to track the complete lifespan of your computer. ;)
 - [ ] Dont wait a minute to refresh the trayicon when used the cli
 - [ ] dbus branch?
 - [ ] Unit testing? (bats)
