@@ -1,6 +1,6 @@
 
 0.2 (WIP)
-*Basic integration with timewarrior tracking every pomodoro_timeout
+*Integration with timewarrior tracking every second
 
 0.1
 *Client/Server/Trayicon
