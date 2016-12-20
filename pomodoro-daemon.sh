@@ -95,7 +95,7 @@ clean_up() {
     #Close pipe
     exec 3>&-
     sleep 1
-    \rm $APP $API $LOCK $NOHOOK $MSG
+    \rm -f $APP $API $LOCK $NOHOOK $MSG
     exit $?
 }
 

@@ -120,11 +120,8 @@ function change_task_form() {
     # Not task selected
     (( selected_task_id == 0 )) && exit 
 
-    #Disable the on-modify.pomodoro taskwarrior hook (loop)
-    touch $NOHOOK
+    #NOT disable the on-modify.pomodoro taskwarrior hook (to update the icon)
     task $selected_task_id start &> /dev/null
-    #Enable
-    \rm -f $NOHOOK
 }
 
 change_task_form
