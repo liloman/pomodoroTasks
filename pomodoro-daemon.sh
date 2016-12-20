@@ -98,7 +98,8 @@ clean_up() {
 
 trap clean_up SIGHUP SIGINT SIGTERM 
 
-locked() {
+#Show a timeout splash screen with a progress bar to let the user take a break
+do_timeout() {
     #Stop and stop current task
     stopped
     #Start tracking pomodoro_timeout with timewarrior
@@ -146,7 +147,7 @@ locked() {
         readonly forms=' --align=center --form'
         local image=' --image-on-top --image=images/pomodoro.png' 
         local buttons='  --buttons-layout=center --button="Back to work"!face-crying:0  '
-        state=locked
+        state=do_timeout
         date=0
         time_elapsed=0
         eval yad $general $timeout  $image $buttons $forms $msg
@@ -221,7 +222,7 @@ update_trayicon(){
 
 increment() {
     ((time_elapsed++))
-    (( time_elapsed >= TIMER1 )) && locked
+    (( time_elapsed >= TIMER1 )) && do_timeout
     update_trayicon
 }
 
