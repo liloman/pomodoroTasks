@@ -15,7 +15,7 @@ get_tasks() {
     local project=
     local description=
     #Get taskwarrior list and skip header
-    for id in $(task _ids); do
+    for id in $(task status:pending _ids); do
         #Skip current active task
         [[ $current_task_id == $id ]] && continue
         project=$(task _get $id.project)
