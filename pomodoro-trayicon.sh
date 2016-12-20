@@ -15,7 +15,7 @@ pomodoro_trayicon () {
     readonly ICON_STARTED=images/iconStarted.png
     readonly ICON_PAUSED=images/iconPaused.png
     readonly ICON_STOPPED=images/iconStopped.png
-    readonly MENU='Change task!bash -c change_task!edit-paste|Stop!bash -c "daemon stop"!process-stop|Reset!bash -c "daemon reset"!edit-redo|Quit!bash -c quit!application-exit'
+    readonly MENU='Change task!bash -c change_task!edit-paste|Stop!bash -c "daemon stop"!process-stop|Reset!bash -c "daemon reset"!edit-redo|Take a break!bash -c "daemon take_break"!alarm-symbolic|Quit!bash -c quit!application-exit'
     local state=
     
     [[ ! -p $APP ]] && { echo "Daemon not running"; return; }

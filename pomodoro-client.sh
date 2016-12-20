@@ -18,7 +18,8 @@ call() {
     echo -e $(<$API)
 }
 
-usage() { echo "Unknown option: try start,pause,stop,reset,status or quit to close the daemon"; }
+#Dont suggest potentialy wrong options dry_start and dry_stop 
+usage() { echo "Unknown option: try start,pause,stop,reset,status,take_break or quit to close the daemon"; }
 
 com() {
     [[ ! -p $APP ]] && { echo "Daemon not running"; return; }
@@ -27,7 +28,7 @@ com() {
 }
 
 case $1 in
-    start|pause|stop|reset|status|quit|dry_start|dry_stop)  com $1
+    start|pause|stop|reset|status|quit|dry_start|dry_stop|take_break)  com $1
         ;;
     *                           ) usage
         ;;

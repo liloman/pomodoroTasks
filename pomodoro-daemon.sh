@@ -42,6 +42,9 @@ events=(
 [stopped-dry_start]=dry_started
 [paused-dry_start]=dry_started
 [stopped-dry_stop]=warning
+[started-take_break]=do_timeout
+[paused-take_break]=do_timeout
+[stopped-take_break]=do_timeout
 )
 
 
@@ -100,7 +103,7 @@ trap clean_up SIGHUP SIGINT SIGTERM
 
 #Show a timeout splash screen with a progress bar to let the user take a break
 do_timeout() {
-    #Stop and stop current task
+    #Stop current task
     stopped
     #Start tracking pomodoro_timeout with timewarrior
     timew start 'pomodoro_timeout'
