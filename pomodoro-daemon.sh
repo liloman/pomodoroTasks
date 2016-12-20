@@ -51,8 +51,10 @@ events=(
 #For unit testing pass some number>0  (normally 1)
 #so It will work in that number of seconds than 60
 testing=$1
-#messages between pomodoro-*
+#messages to API
 readonly API=/dev/shm/pomodoro
+#messages between pomodoro-*
+readonly MSG=/dev/shm/pomodoro.msg
 #mutex (to read API)
 readonly LOCK=/dev/shm/pomodoro.lock
 # pipe to work with trayicon
@@ -80,7 +82,7 @@ date=$(date +%s)
 #Total time elapsed
 time_elapsed=0
 last_task_id=
-state=
+STATE=
 
 [[ -p $APP ]] && { echo "Daemon already running"; exit 1; }
 mkfifo $APP
@@ -93,7 +95,7 @@ clean_up() {
     #Close pipe
     exec 3>&-
     sleep 1
-    \rm $APP $API $LOCK
+    \rm $APP $API $LOCK $NOHOOK $MSG
     exit $?
 }
 
@@ -148,7 +150,7 @@ do_timeout() {
         local forms=' --align=center --form'
         local image=' --image-on-top --image=images/pomodoro.png' 
         local buttons='  --buttons-layout=center --button="Back to work"!face-crying:0  '
-        state=do_timeout
+        STATE=do_timeout
         date=0
         time_elapsed=0
         eval yad $general $timeout  $image $buttons $forms $msg
@@ -174,7 +176,7 @@ do_timeout() {
 
 get_active_task() { 
     local active_id
-    case $state in
+    case $STATE in
         pause*|stop*) active_id=$last_task_id
             ;;
         *           ) active_id=$(task +ACTIVE uuids)
@@ -187,7 +189,7 @@ get_active_task() {
     readonly proj=$(task _get $active_id.project)
 
     [[ -n $total ]] && total+=" total active time"
-    case $state in
+    case $STATE in
         pause*|stop*) echo "\nBreak $BREAKSº. $total\nLast Project($active_id):$proj\n$desc\n" 
             ;;
         *           ) echo "\nBreak $BREAKSº. $total\nProject:$proj\n$desc\n" 
@@ -195,9 +197,9 @@ get_active_task() {
     esac
 }
 
-do_warning() { echo "Already $state" >$API; }
+do_warning() { echo "Already $STATE" >$MSG; }
 
-do_status() { echo "$state $((TIMER_POMODORO - time_elapsed)) minutes left $(get_active_task)" >$API; }
+do_status() { echo "$STATE $((TIMER_POMODORO - time_elapsed)) minutes left $(get_active_task)" >$MSG; }
 
 systray() {
     flock -xn $PID true || 
@@ -216,9 +218,9 @@ update_trayicon(){
     local ICON_PAUSED=images/iconPaused.png
     local ICON_STOPPED=images/iconStopped.png
     #Update trayicon tooltip 
-    systray "tooltip:$state $left minutes left $(get_active_task)" 
+    systray "tooltip:$STATE $left minutes left $(get_active_task)" 
 
-    case $state in
+    case $STATE in
         start*) systray icon:$ICON_STARTED 
             ;;
         pause*) systray icon:$ICON_PAUSED 
@@ -237,7 +239,7 @@ do_increment() {
 #Save last task after going to pause/stop to account proper work time on a task
 save_last_task() {
     local check_id
-    case $state in 
+    case $STATE in 
         pause*|stop*) 
             check_id=$(task +ACTIVE uuids) 
             [[ -n $check_id ]]  && last_task_id=$check_id
@@ -258,8 +260,8 @@ save_last_task() {
 
 do_dry_start() {
     #Don't update time_elapsed when paused
-    [[ $state == stopped ]] && time_elapsed=0 
-    state=started
+    [[ $STATE == stopped ]] && time_elapsed=0 
+    STATE=started
     date=$(date +%s)
     # Can't get the id cause it's activated on taskwarrior hook, so no active already
     # wait 1 minute to refresh (TODO)
@@ -280,21 +282,21 @@ do_start() {
     fi
 
     #Don't update time_elapsed when paused
-    [[ $state == stopped ]] && time_elapsed=0 
-    state=started
+    [[ $STATE == stopped ]] && time_elapsed=0 
+    STATE=started
     date=$(date +%s)
     update_trayicon
 }
 
 
 do_pause() {
-    state=paused
+    STATE=paused
     save_last_task
     update_trayicon
 }
 
 do_dry_stop() {
-    state=stopped
+    STATE=stopped
     date=0
     time_elapsed=0
     save_last_task dry
@@ -302,24 +304,24 @@ do_dry_stop() {
 }
 
 do_stop() {
-    #save before update state
+    #save before update STATE
     save_last_task
-    state=stopped
+    STATE=stopped
     date=0
     time_elapsed=0
     update_trayicon
 }
 
 do_reset() {
-    state=stopped
+    STATE=stopped
     BREAKS=0
     do_start
 }
 
 
-#Call initial state
+#Call initial STATE
 already=$(task +ACTIVE uuids)
-#set the initial state to the real state
+#set the initial STATE to the real STATE
 [[ -z $already ]] && do_stop || do_start
 
 #launch trayicon app
@@ -343,9 +345,9 @@ while true; do
         else
             continue
         fi
-        command=${events[$state-$event]}
+        command=${events[$STATE-$event]}
         [[ -z $command ]] && continue
-        $command
+        $command 
     } 7>$LOCK
 done
 

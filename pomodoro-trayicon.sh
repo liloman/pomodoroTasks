@@ -8,15 +8,16 @@ dir="${path%/*}"
 cd "$dir"
 
 pomodoro_trayicon () {
+    #messages to API
     readonly API=/dev/shm/pomodoro
+    #messages between pomodoro-*
+    readonly MSG=/dev/shm/pomodoro.msg
     readonly LOCK=/dev/shm/pomodoro.lock
     readonly PID=/dev/shm/pomodoroapp.pid
     readonly APP=/dev/shm/pomodoro.app
     readonly ICON_STARTED=images/iconStarted-0.png
-    readonly ICON_PAUSED=images/iconPaused.png
-    readonly ICON_STOPPED=images/iconStopped.png
     readonly MENU='Change task!bash -c change_task!edit-paste|Stop!bash -c "daemon stop"!process-stop|Reset!bash -c "daemon reset"!edit-redo|Take a break!bash -c "daemon take_break"!alarm-symbolic|Close trayicon!bash -c quit!application-exit'
-    local state=
+    local response=
     
     [[ ! -p $APP ]] && { echo "Daemon not running"; return; }
 
@@ -34,18 +35,10 @@ pomodoro_trayicon () {
             } 7>$LOCK
         done
         #nasty timing
-        sleep 0.3
+        sleep 0.5
         if [[ $1 == status ]]; then
-            state=$(<$API)
-            systray "tooltip:$state" 
-            case $state in
-                start*) systray icon:$ICON_STARTED 
-                    ;;
-                pause*) systray icon:$ICON_PAUSED 
-                    ;;
-                stop* ) systray icon:$ICON_STOPPED
-                    ;;
-            esac
+            response=$(<$MSG)
+            systray "tooltip:$response" 
         else
             daemon status 
         fi
@@ -65,11 +58,11 @@ pomodoro_trayicon () {
     # Action on left mouse click
     left_click() {
         daemon status 
-        [[ $state = started* ]] && daemon pause || daemon start
+        [[ $response = started* ]] && daemon pause || daemon start
     }
 
     export -f left_click daemon quit systray change_task
-    export API LOCK ICON_STARTED ICON_PAUSED ICON_STOPPED APP MENU state
+    export MSG API LOCK ICON_STARTED APP MENU response
 
     # Attach FD to APP for reading/write (nonblock)
     exec 3<> $APP
