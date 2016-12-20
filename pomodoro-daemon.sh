@@ -114,18 +114,48 @@ locked() {
         BREAKS=0
     fi
     [[ -n $testing ]] && ((left*=10)) || ((left*=60))
-    readonly general='  --window-icon=images/iconStarted.png --on-top --sticky  --center --undecorated --title=PomodoroTasks' 
-    readonly timeout='  --timeout=$left --timeout-indicator=bottom '
-    readonly forms=' --align=center --form'
-    local image=' --image-on-top --image=images/pomodoro.png' 
-    local buttons='  --buttons-layout=center --button="Back to work"!face-crying:0  '
-    state=locked
-    date=0
-    time_elapsed=0
-    eval yad $general $timeout  $image $buttons $forms $msg
-    local ret=$?
+
+    #Check for reminders
+    local reminders= ret=
+    reminders=$(./reminder-to-yad.py)
+
+    #if there are any reminder show then in a different dialog
+    if [[ $reminders ]]; then
+        readonly general="  --window-icon=images/iconStarted.png --on-top --sticky  --center --undecorated --title=PomodoroTasks" 
+        readonly timeout="  --timeout=$left --timeout-indicator=bottom "
+        local image=" --image-on-top --image=images/pomodoro.png" 
+        local selected=
+
+        #launch the dialog and record the last select row in selected
+        selected=$(./reminder-to-yad.py | yad --list  --expand-column=2 $general $timeout  $image \
+            --buttons-layout=center --button="Back to work"!face-crying:0  \
+            --select-action 'bash -c "null=\"%s\" "' \
+            --column "ID":HD --column "Description" --column "Due Date"   --column "Done":CHK )
+        ret=$?
+
+        #the user has selected any row
+        if [[ $selected ]]; then
+            task_id=${selected%%|*}
+            chk=${selected##*[0-9]|}
+            chk=${chk:: -1}
+            [[ $chk == TRUE ]] && task $task_id done
+        fi
+    else #no reminders normal dialog then
+        readonly general='  --window-icon=images/iconStarted.png --on-top --sticky  --center --undecorated --title=PomodoroTasks' 
+        readonly timeout='  --timeout=$left --timeout-indicator=bottom '
+        readonly forms=' --align=center --form'
+        local image=' --image-on-top --image=images/pomodoro.png' 
+        local buttons='  --buttons-layout=center --button="Back to work"!face-crying:0  '
+        state=locked
+        date=0
+        time_elapsed=0
+        eval yad $general $timeout  $image $buttons $forms $msg
+        ret=$?
+    fi
+
+    #The user hit the back to work button!
     if (($ret==0));then
-        #Stop tracking pomodoro timeout with timewarrior
+        #Stop tracking pomodoro_timeout with timewarrior
         timew stop 
         started
     else #the user didn't hit the back to work button
