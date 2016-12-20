@@ -181,6 +181,10 @@ get_active_task() {
             ;;
     esac
     [[ -z $active_id ]] && { echo "\nNo active task"; return; }
+    #Show the numbers of breaks and the total active time if tracked
+    local total=$(task _get $active_id.totalactivetime)
+    [[ -n $total ]] total+=" total active time"
+    echo "\nBreak $BREAKSº. $total"
     readonly desc=$(task _get $active_id.description)
     readonly proj=$(task _get $active_id.project)
     case $state in
