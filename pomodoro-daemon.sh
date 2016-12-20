@@ -62,12 +62,12 @@ readonly PID=/dev/shm/pomodoroapp.pid
 #messages with on-hook.pomodoro (taskwarrior hook)
 readonly NOHOOK=/dev/shm/pomodoro.onhook
 #timeout pomodoro (minutes)
-readonly TIMER1=25
+readonly TIMER_POMODORO=25
 #break time pomodoro (minutes)
-readonly TIMER2=5
+readonly SHORT_TIME_BREAK=5
 #long break time pomodoro (minutes)
-readonly TIMER3=15
-#Number of breaks to take a long break (TIMER3)
+readonly LONG_TIME_BREAK=15
+#Number of breaks to take a long break (LONG_TIME_BREAK)
 readonly MAXBREAKS=4
 #timeout wait for events (seconds)
 readonly TIMEOUT=${testing:-60}
@@ -107,12 +107,12 @@ do_timeout() {
     timew start 'pomodoro_timeout'
     #Increment number of breaks it
     ((BREAKS++))
-    local left=$TIMER2
+    local left=$SHORT_TIME_BREAK
     local msg=' --field=$"<b>Go away you fool\!</b>(break $BREAKSº)":LBL '
     #Long break if $BREAKS
     if ((BREAKS == MAXBREAKS));then
-        left=$TIMER3
-        msg=' --field=$"<b>Super rest\!</b>($TIMER3 minutes)":LBL '
+        left=$LONG_TIME_BREAK
+        msg=' --field=$"<b>Super rest\!</b>($LONG_TIME_BREAK minutes)":LBL '
         BREAKS=0
     fi
     [[ -n $testing ]] && ((left*=10)) || ((left*=60))
@@ -193,7 +193,7 @@ get_active_task() {
 
 do_warning() { echo "Already $state" >$API; }
 
-do_status() { echo "$state $((TIMER1 - time_elapsed)) minutes left $(get_active_task)" >$API; }
+do_status() { echo "$state $((TIMER_POMODORO - time_elapsed)) minutes left $(get_active_task)" >$API; }
 
 systray() {
     flock -xn $PID true || 
@@ -209,7 +209,7 @@ update_trayicon(){
     local ICON_PAUSED=images/iconPaused.png
     local ICON_STOPPED=images/iconStopped.png
     #Update trayicon tooltip 
-    systray "tooltip:$state $((TIMER1 - time_elapsed)) minutes left $(get_active_task)" 
+    systray "tooltip:$state $((TIMER_POMODORO - time_elapsed)) minutes left $(get_active_task)" 
 
     case $state in
         start*) systray icon:$ICON_STARTED 
@@ -223,7 +223,7 @@ update_trayicon(){
 
 do_increment() {
     ((time_elapsed++))
-    (( time_elapsed >= TIMER1 )) && do_timeout
+    (( time_elapsed >= TIMER_POMODORO )) && do_timeout
     update_trayicon
 }
 
