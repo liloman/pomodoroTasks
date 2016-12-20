@@ -73,7 +73,7 @@ BREAKS=0
 >$API
 
 #Global default values
-state=$(task +ACTIVE ids)
+state=$(task +ACTIVE uuids)
 #set the initial state to the real state
 [[ -z $state ]] && state=stopped || state=started
 date=$(date +%s)
@@ -175,7 +175,7 @@ get_active_task() {
     case $state in
         pause*|stop*) active_id=$last_task_id
             ;;
-        *           ) active_id=$(task +ACTIVE ids)
+        *           ) active_id=$(task +ACTIVE uuids)
             ;;
     esac
     [[ -z $active_id ]] && { echo "\nNo active task"; return; }
@@ -230,11 +230,11 @@ save_last_task() {
     local check_id
     case $state in 
         pause*|stop*) 
-            check_id=$(task +ACTIVE ids) 
+            check_id=$(task +ACTIVE uuids) 
             [[ -n $check_id ]]  && last_task_id=$check_id
             ;; 
         *           ) 
-            last_task_id=$(task +ACTIVE ids) 
+            last_task_id=$(task +ACTIVE uuids) 
             ;; 
     esac
     [[ -z $last_task_id ]] && { return; }
@@ -258,7 +258,7 @@ dry_started() {
 }
 
 started() {
-    local check_id=$(task +ACTIVE ids) 
+    local check_id=$(task +ACTIVE uuids) 
     #If resumed from pause/stop without changing the current task from GUI
     if [[ -n $last_task_id && -z $check_id ]]; then
         #Disable the on-modify.pomodoro taskwarrior hook
