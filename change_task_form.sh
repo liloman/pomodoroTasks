@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+#messages with on-hook.pomodoro (taskwarrior hook)
+readonly NOHOOK=/dev/shm/pomodoro.onhook
+
 #Show change task form
 function change_task_form() {
     readonly current_task_id=$(task +ACTIVE ids)
@@ -100,16 +103,28 @@ function change_task_form() {
     # If current active task
     if [[ -n $current_task_id ]]; then
         if [[ $selected_done == FALSE ]]; then
+            #Disable the on-modify.pomodoro taskwarrior hook (loop)
+            touch $NOHOOK
             task $current_task_id stop &> /dev/null
+            #Enable
+            \rm -f $NOHOOK
         else
+            #Disable the on-modify.pomodoro taskwarrior hook (loop)
+            touch $NOHOOK
             task $current_task_id done  &> /dev/null
+            #Enable
+            \rm -f $NOHOOK
         fi
     fi
 
     # Not task selected
     (( selected_task_id == 0 )) && exit 
 
+    #Disable the on-modify.pomodoro taskwarrior hook (loop)
+    touch $NOHOOK
     task $selected_task_id start &> /dev/null
+    #Enable
+    \rm -f $NOHOOK
 }
 
 change_task_form

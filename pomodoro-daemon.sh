@@ -183,14 +183,14 @@ get_active_task() {
     [[ -z $active_id ]] && { echo "\nNo active task"; return; }
     #Show the numbers of breaks and the total active time if tracked
     local total=$(task _get $active_id.totalactivetime)
-    [[ -n $total ]] total+=" total active time"
-    echo "\nBreak $BREAKSº. $total"
     readonly desc=$(task _get $active_id.description)
     readonly proj=$(task _get $active_id.project)
+
+    [[ -n $total ]] && total+=" total active time"
     case $state in
-        pause*|stop*) echo "\nLast Project($active_id):$proj\n$desc\n" 
+        pause*|stop*) echo "\nBreak $BREAKSº. $total\nLast Project($active_id):$proj\n$desc\n" 
             ;;
-        *           ) echo "\nProject:$proj\n$desc\n" 
+        *           ) echo "\nBreak $BREAKSº. $total\nProject:$proj\n$desc\n" 
             ;;
     esac
 }
@@ -248,7 +248,7 @@ save_last_task() {
     esac
     [[ -z $last_task_id ]] && { return; }
     if [[ -z $1 ]]; then
-        #Disable the on-modify.pomodoro taskwarrior hook
+        #Disable the on-modify.pomodoro taskwarrior hook (loop)
         touch $NOHOOK
         task $last_task_id stop
         #Enable
@@ -270,7 +270,7 @@ do_start() {
     local check_id=$(task +ACTIVE uuids) 
     #If resumed from pause/stop without changing the current task from GUI
     if [[ -n $last_task_id && -z $check_id ]]; then
-        #Disable the on-modify.pomodoro taskwarrior hook
+        #Disable the on-modify.pomodoro taskwarrior hook (loop)
         touch $NOHOOK
         task $last_task_id start
         #Enable
@@ -278,6 +278,7 @@ do_start() {
     else
         last_task_id=$check_id
     fi
+
     #Don't update time_elapsed when paused
     [[ $state == stopped ]] && time_elapsed=0 
     state=started
@@ -301,10 +302,11 @@ do_dry_stop() {
 }
 
 do_stop() {
+    #save before update state
+    save_last_task
     state=stopped
     date=0
     time_elapsed=0
-    save_last_task
     update_trayicon
 }
 
