@@ -21,27 +21,27 @@ needs timew
 declare -A events
 # [from-event]=to
 events=(
-[started-stop]=stopped
-[started-start]=warning 
-[started-pause]=paused 
-[started-stop]=stopped
-[started-reset]=resetted
-[started-timeout]=increment
-[started-status]=status
-[paused-start]=started
-[paused-stop]=stopped
-[paused-reset]=resetted
-[paused-pause]=warning
-[paused-status]=status
-[stopped-start]=started
-[stopped-stop]=warning
-[stopped-reset]=resetted
-[stopped-status]=status
-[started-dry_start]=warning 
-[started-dry_stop]=dry_stopped
-[stopped-dry_start]=dry_started
-[paused-dry_start]=dry_started
-[stopped-dry_stop]=warning
+[started-stop]=do_stop
+[started-start]=do_warning 
+[started-pause]=do_pause 
+[started-stop]=do_stop
+[started-reset]=do_reset
+[started-timeout]=do_increment
+[started-status]=do_status
+[paused-start]=do_start
+[paused-stop]=do_stop
+[paused-reset]=do_reset
+[paused-pause]=do_warning
+[paused-status]=do_status
+[stopped-start]=do_start
+[stopped-stop]=do_warning
+[stopped-reset]=do_reset
+[stopped-status]=do_status
+[started-dry_start]=do_warning 
+[started-dry_stop]=do_dry_stop
+[stopped-dry_start]=do_dry_start
+[paused-dry_start]=do_dry_start
+[stopped-dry_stop]=do_warning
 [started-take_break]=do_timeout
 [paused-take_break]=do_timeout
 [stopped-take_break]=do_timeout
@@ -76,13 +76,11 @@ BREAKS=0
 >$API
 
 #Global default values
-state=$(task +ACTIVE uuids)
-#set the initial state to the real state
-[[ -z $state ]] && state=stopped || state=started
 date=$(date +%s)
 #Total time elapsed
 time_elapsed=0
 last_task_id=
+state=
 
 [[ -p $APP ]] && { echo "Daemon already running"; exit 1; }
 mkfifo $APP
@@ -104,7 +102,7 @@ trap clean_up SIGHUP SIGINT SIGTERM
 #Show a timeout splash screen with a progress bar to let the user take a break
 do_timeout() {
     #Stop current task
-    stopped
+    do_stop
     #Start tracking pomodoro_timeout with timewarrior
     timew start 'pomodoro_timeout'
     #Increment number of breaks it
@@ -125,8 +123,8 @@ do_timeout() {
 
     #if there are any reminder show then in a different dialog
     if [[ $reminders ]]; then
-        readonly general="  --window-icon=images/iconStarted.png --on-top --sticky  --center --undecorated --title=PomodoroTasks" 
-        readonly timeout="  --timeout=$left --timeout-indicator=bottom "
+        local general="  --window-icon=images/iconStarted.png --on-top --sticky  --center --undecorated --title=PomodoroTasks" 
+        local timeout="  --timeout=$left --timeout-indicator=bottom "
         local image=" --image-on-top --image=images/pomodoro.png" 
         local selected=
 
@@ -145,9 +143,9 @@ do_timeout() {
             [[ $chk == TRUE ]] && task $task_id done
         fi
     else #no reminders normal dialog then
-        readonly general='  --window-icon=images/iconStarted.png --on-top --sticky  --center --undecorated --title=PomodoroTasks' 
-        readonly timeout='  --timeout=$left --timeout-indicator=bottom '
-        readonly forms=' --align=center --form'
+        local general='  --window-icon=images/iconStarted.png --on-top --sticky  --center --undecorated --title=PomodoroTasks' 
+        local timeout='  --timeout=$left --timeout-indicator=bottom '
+        local forms=' --align=center --form'
         local image=' --image-on-top --image=images/pomodoro.png' 
         local buttons='  --buttons-layout=center --button="Back to work"!face-crying:0  '
         state=do_timeout
@@ -161,7 +159,7 @@ do_timeout() {
     if (($ret==0));then
         #Stop tracking pomodoro_timeout with timewarrior
         timew stop 
-        started
+        do_start
     else #the user didn't hit the back to work button
         image=' --image-on-top --image=images/clock.png' 
         buttons=' --buttons-layout=center --button="Yes(default)"!gtk-yes:0  --button="No"!gtk-no:1 '
@@ -170,7 +168,7 @@ do_timeout() {
         local ret=$?
         #Stop tracking pomodoro_timeout with timewarrior anyway
         timew stop 
-        (($ret==0)) && started || stopped
+        (($ret==0)) && do_start || do_stop
     fi
 }
 
@@ -193,9 +191,9 @@ get_active_task() {
     esac
 }
 
-warning() { echo "Already $state" >$API; }
+do_warning() { echo "Already $state" >$API; }
 
-status() { echo "$state $((TIMER1 - time_elapsed)) minutes left $(get_active_task)" >$API; }
+do_status() { echo "$state $((TIMER1 - time_elapsed)) minutes left $(get_active_task)" >$API; }
 
 systray() {
     flock -xn $PID true || 
@@ -223,7 +221,7 @@ update_trayicon(){
     esac
 }
 
-increment() {
+do_increment() {
     ((time_elapsed++))
     (( time_elapsed >= TIMER1 )) && do_timeout
     update_trayicon
@@ -251,7 +249,7 @@ save_last_task() {
     fi
 }
 
-dry_started() {
+do_dry_start() {
     #Don't update time_elapsed when paused
     [[ $state == stopped ]] && time_elapsed=0 
     state=started
@@ -261,7 +259,7 @@ dry_started() {
     update_trayicon
 }
 
-started() {
+do_start() {
     local check_id=$(task +ACTIVE uuids) 
     #If resumed from pause/stop without changing the current task from GUI
     if [[ -n $last_task_id && -z $check_id ]]; then
@@ -281,13 +279,13 @@ started() {
 }
 
 
-paused() {
+do_pause() {
     state=paused
     save_last_task
     update_trayicon
 }
 
-dry_stopped() {
+do_dry_stop() {
     state=stopped
     date=0
     time_elapsed=0
@@ -295,7 +293,7 @@ dry_stopped() {
     update_trayicon
 }
 
-stopped() {
+do_stop() {
     state=stopped
     date=0
     time_elapsed=0
@@ -303,14 +301,17 @@ stopped() {
     update_trayicon
 }
 
-resetted() {
+do_reset() {
     state=stopped
     BREAKS=0
-    started
+    do_start
 }
 
+
 #Call initial state
-$state
+already=$(task +ACTIVE uuids)
+#set the initial state to the real state
+[[ -z $already ]] && do_stop || do_start
 
 #launch trayicon app
 "$dir/pomodoro-trayicon.sh" &
