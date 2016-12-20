@@ -182,7 +182,7 @@ get_active_task() {
         *           ) active_id=$(task +ACTIVE uuids)
             ;;
     esac
-    [[ -z $active_id ]] && { echo "\nNo active task"; return; }
+    [[ -z $active_id ]] && { echo "\nBreak $BREAKSº.No active task"; return; }
     #Show the numbers of breaks and the total active time if tracked
     local total=$(task _get $active_id.totalactivetime)
     readonly desc=$(task _get $active_id.description)
