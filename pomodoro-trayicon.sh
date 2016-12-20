@@ -12,10 +12,10 @@ pomodoro_trayicon () {
     readonly LOCK=/dev/shm/pomodoro.lock
     readonly PID=/dev/shm/pomodoroapp.pid
     readonly APP=/dev/shm/pomodoro.app
-    readonly ICON_STARTED=images/iconStarted.png
+    readonly ICON_STARTED=images/iconStarted-0.png
     readonly ICON_PAUSED=images/iconPaused.png
     readonly ICON_STOPPED=images/iconStopped.png
-    readonly MENU='Change task!bash -c change_task!edit-paste|Stop!bash -c "daemon stop"!process-stop|Reset!bash -c "daemon reset"!edit-redo|Take a break!bash -c "daemon take_break"!alarm-symbolic|"Close trayicon"!bash -c quit!application-exit'
+    readonly MENU='Change task!bash -c change_task!edit-paste|Stop!bash -c "daemon stop"!process-stop|Reset!bash -c "daemon reset"!edit-redo|Take a break!bash -c "daemon take_break"!alarm-symbolic|Close trayicon!bash -c quit!application-exit'
     local state=
     
     [[ ! -p $APP ]] && { echo "Daemon not running"; return; }

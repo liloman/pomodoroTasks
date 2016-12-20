@@ -75,7 +75,7 @@ add_new_task(){
 local tasks="0 ------------------------------------  None ----------------------------------- #"
 tasks=$(get_tasks)
 
-readonly general=' --buttons-layout=center --dialog-sep --on-top --window-icon=images/iconStarted.png '
+readonly general=' --buttons-layout=center --dialog-sep --on-top --window-icon=images/iconStarted-0.png '
 readonly sets=' --title="Change task" --text="Please choose a Task" '
 readonly form=" --form --item-separator='#' --align=left --columns=2 "
 readonly column1=" --field Tasks:CB '$tasks' --field :LBL --field \"Mark current Task as done\":CHK false --field :LBL "

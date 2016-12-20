@@ -123,7 +123,7 @@ do_timeout() {
 
     #if there are any reminder show then in a different dialog
     if [[ $reminders ]]; then
-        local general="  --window-icon=images/iconStarted.png --on-top --sticky  --center --undecorated --title=PomodoroTasks" 
+        local general="  --window-icon=images/iconStarted-0.png --on-top --sticky  --center --undecorated --title=PomodoroTasks" 
         local timeout="  --timeout=$left --timeout-indicator=bottom "
         local image=" --image-on-top --image=images/pomodoro.png" 
         local selected=
@@ -143,7 +143,7 @@ do_timeout() {
             [[ $chk == TRUE ]] && task $task_id done
         fi
     else #no reminders normal dialog then
-        local general='  --window-icon=images/iconStarted.png --on-top --sticky  --center --undecorated --title=PomodoroTasks' 
+        local general='  --window-icon=images/iconStarted-0.png --on-top --sticky  --center --undecorated --title=PomodoroTasks' 
         local timeout='  --timeout=$left --timeout-indicator=bottom '
         local forms=' --align=center --form'
         local image=' --image-on-top --image=images/pomodoro.png' 
@@ -205,11 +205,14 @@ systray() {
 }
 
 update_trayicon(){
-    local ICON_STARTED=images/iconStarted.png
+    local left=$((TIMER_POMODORO - time_elapsed))
+    local rest=$((TIMER_POMODORO / 8))
+    local actual=$(( time_elapsed / rest ))
+    local ICON_STARTED=images/iconStarted-$actual.png
     local ICON_PAUSED=images/iconPaused.png
     local ICON_STOPPED=images/iconStopped.png
     #Update trayicon tooltip 
-    systray "tooltip:$state $((TIMER_POMODORO - time_elapsed)) minutes left $(get_active_task)" 
+    systray "tooltip:$state $left minutes left $(get_active_task)" 
 
     case $state in
         start*) systray icon:$ICON_STARTED 
