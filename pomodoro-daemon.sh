@@ -321,11 +321,13 @@ do_reset() {
 
 #Call initial STATE
 already=$(task +ACTIVE uuids)
-#set the initial STATE to the real STATE
-[[ -z $already ]] && do_stop || do_start
 
-#launch trayicon app
+#launch trayicon app before do_anything
 "$dir/pomodoro-trayicon.sh" &
+
+#set the initial STATE to the real STATE
+[[ -z $already ]] && do_stop || do_start 
+
 
 #Launch daemon
 while true; do

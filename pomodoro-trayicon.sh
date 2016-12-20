@@ -15,7 +15,6 @@ pomodoro_trayicon () {
     readonly LOCK=/dev/shm/pomodoro.lock
     readonly PID=/dev/shm/pomodoroapp.pid
     readonly APP=/dev/shm/pomodoro.app
-    readonly ICON_STARTED=images/iconStarted-0.png
     readonly MENU='Change task!bash -c change_task!edit-paste|Stop!bash -c "daemon stop"!process-stop|Reset!bash -c "daemon reset"!edit-redo|Take a break!bash -c "daemon take_break"!alarm-symbolic|Close trayicon!bash -c quit!application-exit'
     local response=
     
@@ -62,7 +61,7 @@ pomodoro_trayicon () {
     }
 
     export -f left_click daemon quit systray change_task
-    export MSG API LOCK ICON_STARTED APP MENU response
+    export MSG API LOCK APP MENU response
 
     # Attach FD to APP for reading/write (nonblock)
     exec 3<> $APP
@@ -71,10 +70,11 @@ pomodoro_trayicon () {
     flock -xn $PID yad --notification --listen --kill-parent \
         --text-align=center --no-middle \
         --text="pomodoroTasks" \
-        --image="$ICON_STARTED" \
         --menu="$MENU" \
         --command="bash -c left_click" <&3 || echo "${0##*/} already running" &
 
+    #Wait some time to let the daemon start to listen
+    sleep 3
     #Update the trayicon
     daemon status
 }
