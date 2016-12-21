@@ -106,7 +106,7 @@ do_timeout() {
     #Stop current task
     do_stop
     #Start tracking pomodoro_timeout with timewarrior
-    timew start 'pomodoro_timeout'
+    timew start 'pomodoro_timeout' +nowork
     #Increment number of breaks it
     ((BREAKS++))
     local left=$SHORT_TIME_BREAK
