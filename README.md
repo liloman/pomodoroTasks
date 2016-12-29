@@ -1,8 +1,16 @@
+#MOVED
 
-Don't make any excuse anymore to not use the [Pomodoro Technique](https://en.wikipedia.org/wiki/Pomodoro_Technique)!
+This project is discontinued and has been ported to python + dbus. 
+This version ended up being way to hacky and buggy and dbus was the obvious solution.
+Like dbus is almost impossible in bash I ported the code to python and no looking back.
 
+[pomodoroTasks2](https://github.com/liloman/pomodoroTasks2)
+
+Lesson learnt: Don't try to implement IPC among 4 processes with files and some bash scripting and use a rock solid solution as dbus. ;)
 
 ###Info
+
+Don't make any excuse anymore to not use the [Pomodoro Technique](https://en.wikipedia.org/wiki/Pomodoro_Technique)!
 
 Pomodoro technique allows you to concentrate on the current task and take short breaks meanwhile works.
 If you get that and join it with a task manager alike taskwarrior (or any other) you can have a complete workflow, accounting the time spend on any task meanwhile you take the proper rests for your brain, body, life and eyes. :)
