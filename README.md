@@ -1,4 +1,4 @@
-#MOVED
+#WARNING
 
 This project is discontinued and has been ported to python + dbus. 
 This version ended up being way to hacky and buggy and dbus was the obvious solution.
